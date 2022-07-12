@@ -1,0 +1,26 @@
+<launch>
+
+  <!-- Declaramos un argumento para poder guardar el nombre del archivo URDF que queremos cargar -->
+  <arg name="model" default="$(find urdf_tutorial)/urdf/01-myfirst.urdf"/>
+  <!-- Declaramos un argumento para especificar si deseamos usar la GUI del paquete "joint_state_publisher" -->
+  <arg name="gui" default="true" />
+  <!-- Declaramos un argumento para indicar el archivo de configuracion de pantalla (.rviz) para cargar en RViz -->
+  <arg name="rvizconfig" default="$(find urdf_tutorial)/rviz/urdf.rviz" />
+
+  <!-- Declaramos un argumento que tendra la descripcion de nuestro modelo -->
+  <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
+
+  <!--
+    if/unless 
+      - if=value      -> Si el valor se evalua como verdadero, se incluye la etiqueta y su contenido.
+      - unless=value  -> Si el valor se evalua como false, se incluye la etiqueta y su contenido.
+  -->
+  <!-- Iniciamos el nodo "joint_state_publisher", ya sea con la GUI o sin la GUI -->
+  <node if="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" />
+  <node unless="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <!-- Iniciamos el nodo "robot_state_publisher" -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <!-- Iniciamos el nodo "rviz" y le indicamos un archivo de configuracion de pantalla (.rviz) para cargar en RViz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+</launch>

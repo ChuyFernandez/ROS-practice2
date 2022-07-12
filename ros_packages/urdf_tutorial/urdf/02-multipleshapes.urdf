@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<robot name="multipleshapes">
+
+  <!--
+  Como podemos observar, ambas formas se superponen entre si, porque comparten el mismo origen. Para que no se 
+  superpongan debemos definir sus origenes (la posicion en donde queremos que esten).
+  -->
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+	<!-- 
+	El cilindro tendra su origen en el centro de su geometria por defecto. Por lo tanto, la mitad del cilindro
+        estara por debajo de la cuadricula.	   
+        altura=0.6 mts radio="0.2 mts".
+        -->
+        <cylinder length="0.6" radius="0.2"/>
+      </geometry>
+    </visual>
+  </link>
+  
+  <link name="right_leg">
+    <visual>
+      <geometry>
+        <!-- Tamano=0.6 x 0.1 x 0.2 mts -->	  
+        <box size="0.6 0.1 0.2"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <!--
+  Los elementos de union pueden referirse a articulaciones flexibles e inflexibles. 
+  Empezaremos con uniones rigidas o fijas.
+  La articulacion se define en terminos de padre e hijo. URDF es, en ultima instancia, una estructura
+  de arbol con un enlace raiz. Esto significa que la posicion de la pierna depende de la posicion de 
+  "base_link".
+  -->
+  <joint name="base_to_right_leg" type="fixed">
+    <parent link="base_link"/>
+    <child link="right_leg"/>
+  </joint>
+
+</robot>

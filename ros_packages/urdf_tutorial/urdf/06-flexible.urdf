@@ -1,0 +1,361 @@
+<?xml version="1.0"?>
+<robot name="flexible">
+
+<!--
+Ahora vamos hacer que las articulaciones sean moviles. 
+Tipos de articulaciones:
+	- fixed : Articulaciones fijas. Conectan rigidamente el padre con el hijo, haciendo imposible el movimiento.
+	- continuous: Articulaciones continuas. Son las mismas que en "revolute" pero sin limites. Pueden rotar
+	  una cantidad infinita de veces.
+	- revolute: Articulaciones angulares. Permiten la rotacion del hijo con respecto al padre, pero solo en una
+	  dimension (1D rotation).
+	- prismatic: Articulaciones prismaticas. Solo permiten la traslacion del hijo con respecto al padre en una 
+	  dimension (1D translation). 
+	- planar: Articulaciones planas. Son variantes bidimensionales de "prismatic" (2D translation).
+	- floating: Articulaciones flotantes. Permiten el movimiento y la rotacion en todas las direcciones sin 
+	  limite alguno (unlimited 6D).
+
+Al cargar el modelo en rviz, cuando se visualiza el modelo vemos que se nos mostrara una GUI (joint_state_publisher_gui) 
+que nos permitira controlar los valores de las articulaciones no fijas. 
+A pedida que movemos los controles deslizantes en la GUI, el modelo se mueve en rviz. Esto se logra gracias a que la GUI
+analiza el URDF y encuentra todas las articulaciones no fijas y sus limites. Luego, usa los valores de los controles 
+deslizantes para publicar mensajes de tipo "sensor_msgs/JointState". Luego, "robot_state_publisher" (un nodo ROS) los 
+usa para calcular todas las transformaciones entre las diferentes partes. El arbol de transformacion resultante se usa 
+para mostrar todas las formas en rviz.
+
+Las articulaciones movibles son:
+	- right_front_wheel_joint (continuous)
+		<parent link="right_base"/>
+   	  	<child link="right_front_wheel"/>
+	- right_back_wheel_joint (continuous)
+		<parent link="right_base"/>
+   		<child link="right_back_wheel"/>
+	- left_front_wheel_joint (continuous)
+		<parent link="left_base"/>
+    		<child link="left_front_wheel"/>
+	- left_back_wheel_joint (continuous)
+		<parent link="left_base"/>
+    		<child link="left_back_wheel"/>
+	- gripper_extension (prismatic)
+		<parent link="base_link"/>
+    		<child link="gripper_pole"/>
+	- left_gripper_joint (revolute)
+		<parent link="gripper_pole"/>
+    		<child link="left_gripper"/>
+	- right_gripper_joint (revolute)
+		<parent link="gripper_pole"/>
+    		<child link="right_gripper"/>
+	- head_swivel (continuous)
+		<parent link="base_link"/>
+    		<child link="head"/>
+
+	Otras (que no se muestran porque son "fixed"):
+	- base_to_right_leg
+	- right_base_joint
+	- base_to_left_leg
+	- left_base_joint
+	- left_tip_joint
+	- right_tip_joint
+	- tobox
+
+Conceptos importantes:
+	- Las ruedas
+	  La conexion entre la base de las ruedas y las ruedass es una articulacion "continuous", esto para que puedan rodar
+	  en ambas direcciones para siempre.
+	- La cabeza
+	  La conexion entre el cuerpo y la cabeza es una articulacion "continuous", lo que significa que puede tomar cualquier
+	  angulo desde el infinito negativo hasta el infinito positivo.
+	  La unica rotacion adicional que tenemos que agregar es el eje de rotacion, especificado por un triplete xyz, que
+	  especifica un vector alrededor del cual girara la cabeza. Como queremos que vaya alrededor del eje z,
+	  especificamos el vector "0 0 1".
+
+	  <joint name="..." type="...">
+		<parent link="..."/>
+		<child link="..."/>
+		<axis xyz="..."/>
+		<origin xyz="..."/>
+	  </joint>
+
+	- La pinza
+	  Las articulaciones de agarre tanto de derecha como de izquierda se modelan como articulaciones "revolute". 
+	  Esto significa que giran de la misma manera que lo hacen las articulaciones continuas, pero tienen limites 
+	  estrictos. Por lo tanto, debemos incluir:
+		- La etiqueta de <limit> que especifica los limites superior e inferior  de la articulacion (en radianes) y,
+		  tambien, debemos especificar una velocidad y esfuerzo maximos para esta articulacion.
+
+	  <joint name="..." type="...">
+                <parent link="..."/>
+                <child link="..."/>
+                <axis xyz="..."/>
+		<origin rpy="..." xyz="..."/>
+		<limit effort="..." lower="..." upper="..." velocity="..."/>
+          </joint>
+
+	- El brazo de la pinza
+	  El brazo de la pinza es un tipo diferente de articulacion, a saber, una articulacion "prismatic". Esto significa que se mueve
+	  a lo largo de un eje, no alrededor de el. Este movimiento de traslacion es lo que permite a nuestro modelo de robot extender
+	  y retraer su brazo.
+	  Los limites del brazo "prismatic" se especifican de la misma manera que una articulacion "revolute", excepto que las unidades
+	  son metros, no radianes.
+
+	  <joint name="..." type="...">
+                <parent link="..."/>
+                <child link="..."/>
+                <origin rpy="..." xyz="..."/>
+                <limit effort="..." lower="..." upper="..." velocity="..."/>
+          </joint>
+-->
+
+<material name="blue">
+    <color rgba="0 0 0.8 1"/>
+  </material>
+  <material name="black">
+    <color rgba="0 0 0 1"/>
+  </material>
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.6" radius="0.2"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <link name="right_leg">
+    <visual>
+      <geometry>
+        <box size="0.6 0.1 0.2"/>
+      </geometry>
+      <origin rpy="0 1.57075 0" xyz="0 0 -0.3"/>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_right_leg" type="fixed">
+    <parent link="base_link"/>
+    <child link="right_leg"/>
+    <origin xyz="0 -0.22 0.25"/>
+  </joint>
+
+  <link name="right_base">
+    <visual>
+      <geometry>
+        <box size="0.4 0.1 0.1"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="right_base_joint" type="fixed">
+    <parent link="right_leg"/>
+    <child link="right_base"/>
+    <origin xyz="0 0 -0.6"/>
+  </joint>
+
+  <link name="right_front_wheel">
+    <visual>
+      <origin rpy="1.57075 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.1" radius="0.035"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+  <joint name="right_front_wheel_joint" type="continuous">
+    <axis rpy="0 0 0" xyz="0 1 0"/>
+    <parent link="right_base"/>
+    <child link="right_front_wheel"/>
+    <origin rpy="0 0 0" xyz="0.133333333333 0 -0.085"/>
+  </joint>
+
+  <link name="right_back_wheel">
+    <visual>
+      <origin rpy="1.57075 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.1" radius="0.035"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+  <joint name="right_back_wheel_joint" type="continuous">
+    <axis rpy="0 0 0" xyz="0 1 0"/>
+    <parent link="right_base"/>
+    <child link="right_back_wheel"/>
+    <origin rpy="0 0 0" xyz="-0.133333333333 0 -0.085"/>
+  </joint>
+
+  <link name="left_leg">
+    <visual>
+      <geometry>
+        <box size="0.6 0.1 0.2"/>
+      </geometry>
+      <origin rpy="0 1.57075 0" xyz="0 0 -0.3"/>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_left_leg" type="fixed">
+    <parent link="base_link"/>
+    <child link="left_leg"/>
+    <origin xyz="0 0.22 0.25"/>
+  </joint>
+
+  <link name="left_base">
+    <visual>
+      <geometry>
+        <box size="0.4 0.1 0.1"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <joint name="left_base_joint" type="fixed">
+    <parent link="left_leg"/>
+    <child link="left_base"/>
+    <origin xyz="0 0 -0.6"/>
+  </joint>
+
+  <link name="left_front_wheel">
+    <visual>
+      <origin rpy="1.57075 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.1" radius="0.035"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+  <joint name="left_front_wheel_joint" type="continuous">
+    <axis rpy="0 0 0" xyz="0 1 0"/>
+    <parent link="left_base"/>
+    <child link="left_front_wheel"/>
+    <origin rpy="0 0 0" xyz="0.133333333333 0 -0.085"/>
+  </joint>
+
+  <link name="left_back_wheel">
+    <visual>
+      <origin rpy="1.57075 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.1" radius="0.035"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+  <joint name="left_back_wheel_joint" type="continuous">
+    <axis rpy="0 0 0" xyz="0 1 0"/>
+    <parent link="left_base"/>
+    <child link="left_back_wheel"/>
+    <origin rpy="0 0 0" xyz="-0.133333333333 0 -0.085"/>
+  </joint>
+
+  <joint name="gripper_extension" type="prismatic">
+    <axis rpy="0 0 0" xyz="1 0 0"/>
+    <parent link="base_link"/>
+    <child link="gripper_pole"/>
+    <limit effort="1000.0" lower="-0.38" upper="0" velocity="0.5"/>
+    <origin rpy="0 0 0" xyz="0.19 0 0.2"/>
+  </joint>
+
+  <link name="gripper_pole">
+    <visual>
+      <geometry>
+        <cylinder length="0.2" radius="0.01"/>
+      </geometry>
+      <origin rpy="0 1.57075 0 " xyz="0.1 0 0"/>
+    </visual>
+  </link>
+
+  <joint name="left_gripper_joint" type="revolute">
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" lower="0.0" upper="0.548" velocity="0.5"/>
+    <origin rpy="0 0 0" xyz="0.2 0.01 0"/>
+    <parent link="gripper_pole"/>
+    <child link="left_gripper"/>
+  </joint>
+
+  <link name="left_gripper">
+    <visual>
+      <origin rpy="0.0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="left_tip_joint" type="fixed">
+    <parent link="left_gripper"/>
+    <child link="left_tip"/>
+  </joint>
+
+  <link name="left_tip">
+    <visual>
+      <origin rpy="0.0 0 0" xyz="0.09137 0.00495 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger_tip.dae"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="right_gripper_joint" type="revolute">
+    <axis xyz="0 0 -1"/>
+    <limit effort="1000.0" lower="0.0" upper="0.548" velocity="0.5"/>
+    <origin rpy="0 0 0" xyz="0.2 -0.01 0"/>
+    <parent link="gripper_pole"/>
+    <child link="right_gripper"/>
+  </joint>
+
+  <link name="right_gripper">
+    <visual>
+      <origin rpy="-3.1415 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="right_tip_joint" type="fixed">
+    <parent link="right_gripper"/>
+    <child link="right_tip"/>
+  </joint>
+
+  <link name="right_tip">
+    <visual>
+      <origin rpy="-3.1415 0 0" xyz="0.09137 0.00495 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger_tip.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="head">
+    <visual>
+      <geometry>
+        <sphere radius="0.2"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+  <joint name="head_swivel" type="continuous">
+    <parent link="base_link"/>
+    <child link="head"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 0.3"/>
+  </joint>
+
+  <link name="box">
+    <visual>
+      <geometry>
+        <box size="0.08 0.08 0.08"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <joint name="tobox" type="fixed">
+    <parent link="head"/>
+    <child link="box"/>
+    <origin xyz="0.1814 0 0.1414"/>
+  </joint>
+</robot>

@@ -1,0 +1,48 @@
+<launch>
+    <!-- Se cargara por defecto el modelo de robot especifico para este archivo de lanzamiento -->
+    <arg name="model" default="$(find urdf_sim_tutorial)/urdf/13-diffdrive.urdf.xacro"/>
+    <!-- Declaramos un argumento para indicar el archivo de configuracion de pantalla (.rviz) para cargar en RViz -->
+    <arg name="rvizconfig" default="$(find urdf_tutorial)/rviz/urdf.rviz" />
+
+    <!-- 
+        Incluimos el archivo de lanzamiento que inicia un mundo vacio en Gazebo y genera el modelo
+        de robot en Gazebo (el cual se le pasa como argumento), iniciando ademas el nodo 
+        "robot_state_publisher" (el que publica transformaciones entre los diferentes marcos de coordenadas). 
+    -->
+    <include file="$(find urdf_sim_tutorial)/launch/gazebo.launch">
+        <arg name="model" value="$(arg model)" />
+    </include>
+
+    <!-- Iniciamos el nodo "rviz" y le indicamos un archivo de configuracion de pantalla (.rviz) para cargar en RViz -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" />
+
+    <!-- 
+        Cargamos:
+            - Un archivo de parametros a un espacio de nombres llamado "r2d2_joint_state_controller".
+            - Un archivo de parametros a un espacio de nombres llamado "r2d2_head_controller".
+            - Un archivo de parametros a un espacio de nombres llamado "r2d2_gripper_controller".
+            - Un archivo de parametros a un espacio de nombres llamado "r2d2_diff_drive_controller".
+    -->
+    <rosparam command="load" file="$(find urdf_sim_tutorial)/config/joints.yaml" ns="r2d2_joint_state_controller" />
+    <rosparam command="load" file="$(find urdf_sim_tutorial)/config/head.yaml" ns="r2d2_head_controller" />
+    <rosparam command="load" file="$(find urdf_sim_tutorial)/config/gripper.yaml" ns="r2d2_gripper_controller" />
+    <rosparam command="load" file="$(find urdf_sim_tutorial)/config/diffdrive.yaml" ns="r2d2_diff_drive_controller" />
+
+    <!--
+        Iniciamos un nodo que ejecuta el script "spawner" del paquete "controller_manager" pasandole como 
+        argumentos los nombres de los espacios de nombres en donde se encuentran los parametros que
+        especifican los tipos de controlador a usar. 
+
+        "r2d2_joint_state_controller" sera el nombre de un controlador.
+        "r2d2_head_controller" sera el nombre de otro controlador.
+        "r2d2_gripper_controller" sera el nombre de otro controlador.
+        "r2d2_diff_drive_controller" sera el nombre de otro controlador.
+    -->
+    <node name="r2d2_controller_spawner" pkg="controller_manager" type="spawner"
+        args="r2d2_joint_state_controller r2d2_head_controller r2d2_gripper_controller r2d2_diff_drive_controller --shutdown-timeout 3"/>
+
+    <!-- Este paquete proporciona un complemento GUI para dirigir un robot mediante mensajes Twist -->
+    <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">
+        <param name="default_topic" value="/r2d2_diff_drive_controller/cmd_vel"/>
+    </node>
+</launch>

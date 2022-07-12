@@ -1,0 +1,44 @@
+<launch>
+
+    <!-- Declaramos varias argumentos -->
+    <arg name="paused" default="false"/>
+    <arg name="use_sim_time" default="true"/>
+    <arg name="gui" default="true"/>
+    <arg name="headless" default="false"/>
+    <arg name="debug" default="false"/>
+    <!-- Se cargara por defecto el ultimo modelo de robot que se creo utilizando Xacro -->
+    <arg name="model" default="$(find urdf_tutorial)/urdf/08-macro.urdf.xacro"/>
+
+    <!-- Iniciamos un mundo vacia en Gazebo y especificamos algunos argumentos -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="debug" value="$(arg debug)" />
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+        <arg name="headless" value="$(arg headless)"/>
+    </include>
+
+    <!-- Cargamos el modelo (URDF) al servidor de parametros -->
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
+
+    <!-- 
+        Recordemos que "gazebo_ros" proporciona complementos ROS que ofrecen publicadores de mensajes
+        y servicios para interactuar con Gazebo a traves de ROS.
+        Los podemos consultar mediante los comandos:
+            - rostopic list
+            - rosservice list
+
+        Lo que indicamos es que genere un modelo de robot en Gazebo.
+    -->
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model"
+        args="-z 1.0 -unpause -urdf -model robot -param robot_description" respawn="false" output="screen" />
+
+    <!-- 
+        Iniciamos el nodo "robot_state_publisher" (el que publica transformaciones entre los
+        diferentes marcos de coordenadas). 
+    -->
+    <node pkg="robot_state_publisher" type="robot_state_publisher"  name="robot_state_publisher">
+        <param name="publish_frequency" type="double" value="30.0" />
+    </node>
+
+</launch>

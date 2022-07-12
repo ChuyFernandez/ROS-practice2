@@ -1,0 +1,33 @@
+# Especificamos el uso de un "DiffDriveController" del paquete "position_controllers"
+# para controlar las ruedas del robot (en esencia se utiliza para controlar una base
+# movil de accionamiento diferencial).
+# Un robot movil de cinematica diferencial es aquel que cuenta con dos ruedas motrices 
+# unidas por un eje. Cada una de estas ruedas tiene su propio motor que las hace girar.
+type: "diff_drive_controller/DiffDriveController"
+publish_rate: 50
+
+left_wheel: ['left_front_wheel_joint', 'left_back_wheel_joint']
+right_wheel: ['right_front_wheel_joint', 'right_back_wheel_joint']
+
+wheel_separation: 0.44
+
+# Los robots moviles usan la odometria para estimar su posicion relativa a su localizacion inicial.
+pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.03]
+twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.03]
+
+# Marco base
+base_frame_id: base_link
+
+# Limites de velocidad y aceleracion del robot
+linear:
+  x:
+    has_velocity_limits    : true
+    max_velocity           : 0.2   # m/s
+    has_acceleration_limits: true
+    max_acceleration       : 0.6   # m/s^2
+angular:
+  z:
+    has_velocity_limits    : true
+    max_velocity           : 2.0   # rad/s
+    has_acceleration_limits: true
+    max_acceleration       : 6.0   # rad/s^2

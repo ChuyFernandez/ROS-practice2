@@ -1,0 +1,4 @@
+# Especificamos el uso de un "JointPositionController" del paquete "position_controllers"
+# para controlar la articulacion de la cabeza 
+type: "position_controllers/JointPositionController"
+joint: head_swivel

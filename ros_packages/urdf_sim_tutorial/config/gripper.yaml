@@ -1,0 +1,7 @@
+# Especificamos el uso de un "JointGroupPositionController" del paquete "position_controllers"
+# para controlar un grupo de articulaciones a la vez
+type: "position_controllers/JointGroupPositionController"
+joints: 
+  - gripper_extension
+  - left_gripper_joint
+  - right_gripper_joint

@@ -1,0 +1,24 @@
+<launch>
+    <!-- Cargamos las configuraciones desde el archivo YAML al servidor de paametros -->
+    <rosparam command="load" file="$(find <package>)/config/<name_file>.yaml" />
+
+    <!-- Cargamos los controladores -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/my_robot"
+        args="joint_state_controller joint1_position_controller joint2_position_controller"/>
+
+    <!-- Convertimos los estados de las articulaciones a transformaciones TF para RViz -->
+    <node pkg="robot_state_publisher" type="robot_state_publisher"  name="robot_state_publisher" respawn="false" output="screen">
+        <!--
+        El tema donde se estaran publicando los estados de las articulaciones es: "/my_robot/joint_states"
+
+        Reasignacion de temas ROS para nodos (remap)
+            La reasignacion nos permite "engañar" a un nodo ROS para que cuando crea que se esta suscribiendo o publicando en 
+            "/some_topic" en realidad se esta suscribiendo o publicando en "/some_other_topic".
+
+            Atributos:
+                - from: "/some_topic"
+                - to: "/some_other_topic"
+        -->
+        <remap from="/joint_states" to="/my_robot/joint_states"/>
+    </node>
+</launch>
